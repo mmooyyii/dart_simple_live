@@ -153,9 +153,17 @@ mixin PlayerStateMixin on PlayerMixin {
     );
   }
 }
+/// 每秒最多送入弹幕组件的条数
+/// - canvas_danmaku 每条都会先排版文字再找空轨道，轨道满时排版白做，
+///   大房间每秒几百条时会拖慢渲染，超出部分轨道也放不下，直接丢弃
+const int kMaxDanmakuPerSecond = 25;
+
 mixin PlayerDanmakuMixin on PlayerStateMixin {
   /// 弹幕控制器
   DanmakuController? danmakuController;
+
+  int _danmakuWindowStart = 0;
+  int _danmakuWindowCount = 0;
 
   void initDanmakuController(DanmakuController e) {
     danmakuController = e;
@@ -184,6 +192,15 @@ mixin PlayerDanmakuMixin on PlayerStateMixin {
       return;
     }
     for (var item in items) {
+      var now = DateTime.now().millisecondsSinceEpoch;
+      if (now - _danmakuWindowStart >= 1000) {
+        _danmakuWindowStart = now;
+        _danmakuWindowCount = 0;
+      }
+      if (_danmakuWindowCount >= kMaxDanmakuPerSecond) {
+        return;
+      }
+      _danmakuWindowCount++;
       danmakuController?.addDanmaku(item);
     }
   }

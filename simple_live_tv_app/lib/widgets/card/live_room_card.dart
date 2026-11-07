@@ -109,15 +109,7 @@ class LiveRoomCard extends StatelessWidget {
               child: SizedBox(
                 height: 56.w,
                 child: focusNode.isFoucsed.value
-                    ? Marquee(
-                        text: title,
-                        style: AppStyle.textStyleBlack,
-                        startAfter: const Duration(seconds: 1),
-                        velocity: 20,
-                        blankSpace: 200.w,
-                        //decelerationDuration: const Duration(seconds: 2),
-                        scrollAxis: Axis.horizontal,
-                      )
+                    ? buildFocusedTitle()
                     : Container(
                         alignment: Alignment.centerLeft,
                         child: Text(
@@ -157,6 +149,42 @@ class LiveRoomCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  /// 获得焦点时的标题：放不下才滚动，否则静态显示，避免一直重绘
+  Widget buildFocusedTitle() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        var painter = TextPainter(
+          text: TextSpan(text: title, style: AppStyle.textStyleBlack),
+          maxLines: 1,
+          textDirection: TextDirection.ltr,
+          textScaler: MediaQuery.textScalerOf(context),
+        )..layout();
+        var overflow = painter.width > constraints.maxWidth;
+        painter.dispose();
+        if (!overflow) {
+          return Container(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              title,
+              style: AppStyle.textStyleBlack,
+              maxLines: 1,
+            ),
+          );
+        }
+        return RepaintBoundary(
+          child: Marquee(
+            text: title,
+            style: AppStyle.textStyleBlack,
+            startAfter: const Duration(seconds: 1),
+            velocity: 20,
+            blankSpace: 200.w,
+            scrollAxis: Axis.horizontal,
+          ),
+        );
+      },
     );
   }
 }

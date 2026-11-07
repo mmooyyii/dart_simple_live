@@ -239,7 +239,8 @@ Widget buildDanmuView(VideoState videoState, LiveRoomController controller) {
                       AppSettingsController.instance.danmuBottomMargin.value,
                 )
               : EdgeInsets.zero,
-          child: controller.danmakuView!,
+          // 弹幕每帧重绘，隔离成单独图层，避免带着控制层一起重绘
+          child: RepaintBoundary(child: controller.danmakuView!),
         ),
       ),
     ),

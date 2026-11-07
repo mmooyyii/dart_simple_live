@@ -73,8 +73,10 @@ class CategoryPage extends GetView<CategoryController> {
             alignment: WrapAlignment.center,
             spacing: 36.w,
             children: Sites.supportSites
-                .map(
-                  (e) => Obx(
+                .map((e) {
+                  // 节点放在 Obx 外，切换站点重建按钮时焦点不丢失
+                  var focusNode = AppFocusNode();
+                  return Obx(
                     () => HighlightButton(
                       icon: Image.asset(
                         e.logo,
@@ -83,13 +85,13 @@ class CategoryPage extends GetView<CategoryController> {
                       ),
                       text: e.name,
                       selected: controller.siteId.value == e.id,
-                      focusNode: AppFocusNode(),
+                      focusNode: focusNode,
                       onTap: () {
                         controller.setSite(e.id);
                       },
                     ),
-                  ),
-                )
+                  );
+                })
                 .toList(),
           ),
           AppStyle.vGap24,

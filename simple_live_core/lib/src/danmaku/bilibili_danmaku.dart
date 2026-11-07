@@ -143,6 +143,9 @@ class BiliBiliDanmaku implements LiveDanmaku {
     return writer.buffer;
   }
 
+  static final _controlCharsReg =
+      RegExp(r"[\x00-\x1f]+", unicode: true, multiLine: true);
+
   void decodeMessage(List<int> data) {
     try {
       //协议版本。0为JSON，可以直接解析；1为房间人气值,Body为4位Int32；2为压缩过Buffer，需要解压再处理
@@ -172,10 +175,14 @@ class BiliBiliDanmaku implements LiveDanmaku {
 
         var text = utf8.decode(body, allowMalformed: true);
 
-        var group =
-            text.split(RegExp(r"[\x00-\x1f]+", unicode: true, multiLine: true));
+        var group = text.split(_controlCharsReg);
         for (var item
             in group.where((x) => x.length > 2 && x.startsWith('{'))) {
+          // 只处理弹幕和 SC，其余消息（进场、礼物等量很大）跳过 json 解析
+          if (!item.contains('"DANMU_MSG') &&
+              !item.contains('"SUPER_CHAT_MESSAGE"')) {
+            continue;
+          }
           parseMessage(item);
         }
       }

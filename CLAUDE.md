@@ -18,6 +18,8 @@
 
 - TV 端交互基于遥控器焦点（`AppFocusNode` / `BaseFocusModel`），新增可交互组件要处理焦点
 - 弹幕处理在热路径上（大房间每秒几百条），避免每条消息做重复计算（如构造正则），屏蔽词用 `AppSettingsController.isShielded`
+- 送入 canvas_danmaku 的弹幕在 `PlayerDanmakuMixin.addDanmaku` 按 `kMaxDanmakuPerSecond` 限流（该库每条都先排版再找轨道，轨道满时白做）
+- `Obx` 内不要新建 `AppFocusNode`，重建会换掉节点导致焦点丢失；放到 `Obx` 外或控制器里
 
 ## 发版与 OTA
 
