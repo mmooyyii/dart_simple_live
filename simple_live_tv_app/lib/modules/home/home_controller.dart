@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:simple_live_tv_app/app/controller/base_controller.dart';
 
 import 'package:simple_live_tv_app/routes/route_path.dart';
+import 'package:simple_live_tv_app/services/ota_service.dart';
 
 class HomeController extends BaseController {
   var datetime = "00:00".obs;
@@ -13,6 +14,13 @@ class HomeController extends BaseController {
   void onInit() {
     initTimer();
     super.onInit();
+  }
+
+  @override
+  void onReady() {
+    // 启动后静默检查一次更新，有新版本才弹窗
+    OtaService.checkUpdate();
+    super.onReady();
   }
 
   void initTimer() {

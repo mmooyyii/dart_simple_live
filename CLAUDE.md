@@ -19,6 +19,12 @@
 - TV 端交互基于遥控器焦点（`AppFocusNode` / `BaseFocusModel`），新增可交互组件要处理焦点
 - 弹幕处理在热路径上（大房间每秒几百条），避免每条消息做重复计算（如构造正则），屏蔽词用 `AppSettingsController.isShielded`
 
+## 发版与 OTA
+
+- 应用内更新（`lib/services/ota_service.dart`）读取 GitHub `mmooyyii/dart_simple_live` 的 Releases，取最新的 `tv_` 开头 tag，按设备 ABI 下载 `app-<abi>-release.apk`，通过 MethodChannel `simple_live_tv/ota` + FileProvider 调起系统安装
+- 发版：先改 `simple_live_tv_app/pubspec.yaml` 的 `version`，再打 tag `tv_<同一版本号>`（如 `tv_1.6.6`）触发 `publish_tv_app_release.yaml`；版本比较用 tag 里的版本号对比 `packageInfo.version`
+- 覆盖安装要求签名一致，CI 需配置 `TV_KEYSTORE_BASE64` 等签名 secrets
+
 ## Git
 
 - **每完成一项改动，自动 `git commit`**，不用询问

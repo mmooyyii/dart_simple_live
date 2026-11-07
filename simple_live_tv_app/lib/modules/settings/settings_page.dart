@@ -6,6 +6,7 @@ import 'package:simple_live_tv_app/app/app_focus_node.dart';
 import 'package:simple_live_tv_app/app/app_style.dart';
 import 'package:simple_live_tv_app/app/controller/app_settings_controller.dart';
 import 'package:simple_live_tv_app/app/utils.dart';
+import 'package:simple_live_tv_app/services/ota_service.dart';
 import 'package:simple_live_tv_app/modules/settings/settings_controller.dart';
 import 'package:simple_live_tv_app/services/bilibili_account_service.dart';
 import 'package:simple_live_tv_app/services/follow_user_service.dart';
@@ -485,8 +486,8 @@ class SettingsPage extends GetView<SettingsController> {
         HighlightListTile(
           focusNode: controller.versionFocusNode,
           title: "版本",
-          subtitle: "v${Utils.packageInfo.version}",
-          onTap: ()=>{},
+          subtitle: "v${Utils.packageInfo.version}，点击检查更新",
+          onTap: () => OtaService.checkUpdate(manual: true),
         ),
       ],
     );

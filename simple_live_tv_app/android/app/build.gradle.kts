@@ -68,3 +68,8 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // OTA 更新用 FileProvider
+    implementation("androidx.core:core:1.13.1")
+}

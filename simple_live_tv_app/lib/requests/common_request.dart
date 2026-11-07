@@ -1,43 +1,32 @@
-import 'dart:convert';
-
 import 'package:simple_live_tv_app/models/version_model.dart';
 import 'package:simple_live_tv_app/requests/http_client.dart';
 
 /// 通用的请求
 class CommonRequest {
-  Future<VersionModel> checkUpdate() async {
-    try {
-      return await checkUpdateGitMirror();
-    } catch (e) {
-      return await checkUpdateJsDelivr();
-    }
-  }
+  static const kGitHubRepo = "mmooyyii/dart_simple_live";
 
-  /// 检查更新
-  Future<VersionModel> checkUpdateGitMirror() async {
+  /// TV 版发版 tag 前缀，见 .github/workflows/publish_tv_app_release.yaml
+  static const kTvTagPrefix = "tv_";
+
+  /// 获取最新的 TV 版 Release，没有则返回 null
+  Future<VersionModel?> checkUpdate() async {
     var result = await HttpClient.instance.getJson(
-      "https://github.iill.moe/xiaoyaocz/dart_simple_live/master/assets/tv_app_version.json",
+      "https://api.github.com/repos/$kGitHubRepo/releases",
       queryParameters: {
-        "ts": DateTime.now().millisecondsSinceEpoch,
+        "per_page": 30,
+      },
+      header: {
+        "Accept": "application/vnd.github+json",
       },
     );
-    if (result is Map) {
-      return VersionModel.fromJson(result as Map<String, dynamic>);
+    for (var item in result as List) {
+      if (item['draft'] == true) {
+        continue;
+      }
+      if (item['tag_name'].toString().startsWith(kTvTagPrefix)) {
+        return VersionModel.fromGitHubRelease(item as Map<String, dynamic>);
+      }
     }
-    return VersionModel.fromJson(json.decode(result));
-  }
-
-  /// 检查更新
-  Future<VersionModel> checkUpdateJsDelivr() async {
-    var result = await HttpClient.instance.getJson(
-      "https://cdn.jsdelivr.net/gh/xiaoyaocz/dart_simple_live@master/assets/tv_app_version.json",
-      queryParameters: {
-        "ts": DateTime.now().millisecondsSinceEpoch,
-      },
-    );
-    if (result is Map) {
-      return VersionModel.fromJson(result as Map<String, dynamic>);
-    }
-    return VersionModel.fromJson(json.decode(result));
+    return null;
   }
 }
