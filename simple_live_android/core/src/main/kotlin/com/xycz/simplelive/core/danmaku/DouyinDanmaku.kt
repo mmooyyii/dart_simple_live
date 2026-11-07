@@ -1,5 +1,6 @@
 package com.xycz.simplelive.core.danmaku
 
+import com.xycz.simplelive.core.common.CoreLog
 import com.xycz.simplelive.core.common.Http
 import com.xycz.simplelive.core.common.Js
 import com.xycz.simplelive.core.common.md5Hex
@@ -24,7 +25,15 @@ class DouyinDanmaku : WebSocketDanmaku() {
         val a = args as DouyinDanmakuArgs
         // 签名要执行 600KB 的 JS，放到后台线程
         scope.launch {
-            val url = buildUrl(a)
+            val t = System.currentTimeMillis()
+            val url = try {
+                buildUrl(a)
+            } catch (e: Exception) {
+                CoreLog.e("抖音弹幕签名失败", e)
+                onClose?.invoke("弹幕签名失败：${e.message}")
+                return@launch
+            }
+            CoreLog.d("抖音弹幕签名耗时 ${System.currentTimeMillis() - t}ms")
             connect(
                 url,
                 headers = mapOf(

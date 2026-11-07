@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="48dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="使用须知"
+        android:textSize="24dp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="600dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:lineSpacingExtra="6dp"
+        android:text="1. 本软件为开源软件，仅供学习交流使用，严禁用于商业用途。\n2. 本软件不提供任何直播内容，所有内容均来自各直播平台。\n3. 本软件所有功能均基于互联网公开资料开发，无任何破解行为。\n4. 若本软件侵犯了您的合法权益，请联系开发者删除。\n\n继续使用即表示您已阅读并同意以上内容。"
+        android:textSize="@dimen/text_normal" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:orientation="horizontal">
+
+        <com.xycz.simple_live_tv.ui.widget.PillButton
+            android:id="@+id/agree"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="24dp"
+            android:text="已阅读并同意" />
+
+        <com.xycz.simple_live_tv.ui.widget.PillButton
+            android:id="@+id/exit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="退出应用" />
+    </LinearLayout>
+</LinearLayout>

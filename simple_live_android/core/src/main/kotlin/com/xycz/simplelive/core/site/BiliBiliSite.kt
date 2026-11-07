@@ -174,6 +174,8 @@ class BiliBiliSite : LiveSite {
                 for (codec in format["codec"].arr) {
                     val isHevc = codec["codec_name"].str == "hevc"
                     if (isHevc && !DeviceCapability.supportHevc) continue
+                    // ExoPlayer 的 FLV 解析只支持 H.264，H.265 只能走 fmp4/ts
+                    if (isHevc && format["format_name"].str == "flv") continue
                     val baseUrl = codec["base_url"].str
                     val urls = codec["url_info"].arr.map { "${it["host"].str}$baseUrl${it["extra"].str}" }
                     if (codec["current_qn"].int == qn) {

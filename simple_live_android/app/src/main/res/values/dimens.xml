@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 按 1920x1080 设计稿 /2 换算 -->
+    <dimen name="text_title">20dp</dimen>
+    <dimen name="text_normal">16dp</dimen>
+    <dimen name="text_button">14dp</dimen>
+    <dimen name="text_sub">12dp</dimen>
+    <dimen name="page_padding">24dp</dimen>
+    <dimen name="radius">8dp</dimen>
+</resources>

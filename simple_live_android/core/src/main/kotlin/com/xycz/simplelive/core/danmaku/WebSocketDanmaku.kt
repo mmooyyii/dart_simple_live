@@ -59,6 +59,7 @@ abstract class WebSocketDanmaku : LiveDanmaku {
             override fun onOpen(webSocket: WebSocket, response: Response) {
                 if (webSocket != socket) return
                 reconnectCount = 0
+                CoreLog.d("弹幕已连接 ${target.substringBefore('?')}")
                 onSocketOpen()
                 onReady?.invoke()
                 startHeartbeat()

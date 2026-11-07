@@ -71,15 +71,18 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlin {
-        jvmToolchain(21)
-    }
     buildFeatures {
         buildConfig = true
         viewBinding = true
     }
     packaging {
         resources.excludes += setOf("META-INF/*.kotlin_module", "META-INF/versions/**")
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
 

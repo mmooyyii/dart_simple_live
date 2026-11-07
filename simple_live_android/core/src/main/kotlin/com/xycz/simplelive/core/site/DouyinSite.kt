@@ -299,7 +299,10 @@ class DouyinSite : LiveSite {
         if (streamData != null) {
             for (q in qualities) {
                 val main = streamData[q["sdk_key"].str]["main"]
-                val urls = listOf(main["flv"].str, main["hls"].str).filter { it.isNotEmpty() }
+                // H.265 的流 FLV 播不了（ExoPlayer 的 FLV 解析只支持 H.264），把 HLS 放前面
+                val vCodec = runCatching { parseJson(main["sdk_params"].str)["VCodec"].str }.getOrDefault("")
+                val urls = (if (vCodec.contains("265")) listOf(main["hls"].str, main["flv"].str)
+                else listOf(main["flv"].str, main["hls"].str)).filter { it.isNotEmpty() }
                 if (urls.isNotEmpty()) result += LivePlayQuality(q["name"].str, urls, q["level"].int ?: 0)
             }
         }

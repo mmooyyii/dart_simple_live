@@ -159,7 +159,8 @@ class DouyuSite : LiveSite {
         return LivePlayUrl(urls = urls, notice = notice)
     }
 
-    private fun hevc() = if (DeviceCapability.supportHevc) 1 else 0
+    // 斗鱼只给 FLV，ExoPlayer 的 FLV 解析不支持 H.265，所以固定要 H.264
+    private fun hevc() = 0
 
     override suspend fun searchRooms(keyword: String, page: Int): PageResult<LiveRoomItem> {
         val result = Http.getJson(

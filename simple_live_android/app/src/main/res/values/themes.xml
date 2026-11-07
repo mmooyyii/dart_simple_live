@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@drawable/bg_app</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="colorAccent">@color/accent</item>
+        <item name="colorPrimary">@color/bg_start</item>
+        <item name="colorPrimaryDark">@color/bg_start</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:defaultFocusHighlightEnabled" tools:targetApi="o" xmlns:tools="http://schemas.android.com/tools">false</item>
+        <item name="alertDialogTheme">@style/AppDialog</item>
+    </style>
+
+    <style name="PlayerTheme" parent="AppTheme">
+        <item name="android:windowBackground">@color/black</item>
+    </style>
+
+    <style name="AppDialog" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/bg_dialog</item>
+        <item name="colorAccent">@color/accent</item>
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <!-- 可聚焦的胶囊按钮文字 -->
+    <style name="PillText">
+        <item name="android:textSize">@dimen/text_button</item>
+        <item name="android:textColor">@color/text_focus</item>
+        <item name="android:duplicateParentState">true</item>
+        <item name="android:maxLines">1</item>
+    </style>
+</resources>
