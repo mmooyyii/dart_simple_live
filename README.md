@@ -26,12 +26,14 @@
 
 ## 项目结构
 
-- `simple_live_core` 项目核心库，实现获取各个网站的信息及弹幕。
-- `simple_live_tv_app` 基于核心库实现的Flutter Android TV客户端。
+- `simple_live_android` 原生 Android TV 客户端（Kotlin + View，ExoPlayer 播放）
+  - `:core` 核心库，各平台直播信息与弹幕（纯 Kotlin/JVM）
+  - `:app` TV 界面
+- `simple_live_core` 旧版 Dart 核心库，仅作移植参考
 
 ## 环境
 
-Flutter : `3.38`
+JDK 21，Android SDK（compileSdk 36），Gradle Wrapper 8.14
 
 ## 参考及引用
 

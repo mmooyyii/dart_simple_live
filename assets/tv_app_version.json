@@ -1,7 +1,7 @@
 {
-    "version": "1.6.6",
-    "version_num": 10606,
-    "version_desc": "- 新增应用内更新（设置 → 关于 → 版本）\n- 抖音支持通过直播间链接打开，搜索框可手机扫码发送链接到电视\n- 修复直播间定时器泄漏、快速切台播错台、关注后直播状态被清空等问题\n- 弹幕限流与渲染优化，降低大房间卡顿",
+    "version": "2.0.0",
+    "version_num": 20000,
+    "version_desc": "- 重写为原生 Android（Kotlin），安装包和内存占用大幅减小，低配电视更流畅\n- 播放器换成 ExoPlayer；B站/抖音可选最高画质，斗鱼未登录最高为高清\n- 局域网内多台设备自动同步关注、观看记录、屏蔽词\n- 覆盖安装自动迁移旧版的关注、记录、设置",
     "prerelease": false,
     "download_url": "https://github.com/mmooyyii/dart_simple_live/releases"
 }

@@ -12,6 +12,9 @@ val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+} else if (project.hasProperty("requireReleaseSigning")) {
+    // CI 发版必须用正式签名，否则发出去的包无法覆盖升级
+    throw GradleException("缺少 key.properties，不能构建正式签名的发版包")
 }
 
 // 版本号：versionCode 沿用 Flutter split-per-abi 的规则 abi*1000 + base，必须大于旧版

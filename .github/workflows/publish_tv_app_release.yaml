@@ -6,7 +6,7 @@ on:
       - "tv_*"
 jobs:
   build-tv:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
@@ -15,7 +15,7 @@ jobs:
         with:
           ref: master
 
-      #APK签名设置
+      #APK签名设置（与旧 Flutter 版同一把 key，才能覆盖升级）
       - name: Download Android keystore
         id: android_tv_keystore
         uses: timheuer/base64-to-file@v1.2
@@ -24,46 +24,30 @@ jobs:
           encodedString: ${{ secrets.TV_KEYSTORE_BASE64 }}
       - name: Create key.properties
         run: |
-          echo "storeFile=${{ steps.android_tv_keystore.outputs.filePath }}" > simple_live_tv_app/android/key.properties
-          echo "storePassword=${{ secrets.TV_STORE_PASSWORD }}" >> simple_live_tv_app/android/key.properties
-          echo "keyPassword=${{ secrets.TV_KEY_PASSWORD }}" >> simple_live_tv_app/android/key.properties
-          echo "keyAlias=${{ secrets.TV_KEY_ALIAS }}" >> simple_live_tv_app/android/key.properties
+          echo "storeFile=${{ steps.android_tv_keystore.outputs.filePath }}" > simple_live_android/key.properties
+          echo "storePassword=${{ secrets.TV_STORE_PASSWORD }}" >> simple_live_android/key.properties
+          echo "keyPassword=${{ secrets.TV_KEY_PASSWORD }}" >> simple_live_android/key.properties
+          echo "keyAlias=${{ secrets.TV_KEY_ALIAS }}" >> simple_live_android/key.properties
 
       # 设置JAVA环境
       - uses: actions/setup-java@v4
         with:
           distribution: "zulu"
-          java-version: "17"
+          java-version: "21"
           cache: "gradle"
 
-      #设置Flutter
-      - name: Flutter action
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: "3.38.x"
-          cache: true
-
-      #更新Flutter的packages
-      - name: Restore packages
-        run: |
-          cd simple_live_tv_app
-          flutter pub get
-
-      #打包APK
+      #打包APK（按 ABI 拆分：app-<abi>-release.apk）
       - name: Build APK
         run: |
-          cd simple_live_tv_app
-          flutter build apk --release --split-per-abi
+          cd simple_live_android
+          ./gradlew :app:assembleRelease -PrequireReleaseSigning --no-daemon
 
       #上传APK至Artifacts
       - name: Upload APK to Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: android_tv
-          path: |
-            simple_live_tv_app/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
-            simple_live_tv_app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
-            simple_live_tv_app/build/app/outputs/flutter-apk/app-x86_64-release.apk
+          path: simple_live_android/app/build/outputs/apk/release/app-*-release.apk
 
       #读取版本信息
       - name: Read version
@@ -73,8 +57,6 @@ jobs:
           path: assets/tv_app_version.json
       - name: Echo version
         run: echo "${{ fromJson(steps.version.outputs.content).version }}"
-      - name: Echo version content
-        run: echo "${{ fromJson(steps.version.outputs.content).version_desc }}"
 
       #上传至Release
       - name: Upload Release
@@ -85,9 +67,9 @@ jobs:
           prerelease: ${{ fromJson(steps.version.outputs.content).prerelease }}
           token: ${{ secrets.GITHUB_TOKEN }}
           files: |
-            simple_live_tv_app/build/app/outputs/flutter-apk/app-x86_64-release.apk
-            simple_live_tv_app/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
-            simple_live_tv_app/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+            simple_live_android/app/build/outputs/apk/release/app-x86_64-release.apk
+            simple_live_android/app/build/outputs/apk/release/app-arm64-v8a-release.apk
+            simple_live_android/app/build/outputs/apk/release/app-armeabi-v7a-release.apk
 
       #完成
       - run: echo "🍏 This job's status is ${{ job.status }}."

@@ -2,33 +2,38 @@
 
 ## 项目范围
 
-本仓库只维护 **Android TV 端**。手机/桌面端（`simple_live_app`）和控制台（`simple_live_console`）已删除，不要再加回来。
+本仓库只维护 **Android TV 端**。手机/桌面端和控制台已删除，不要再加回来。Flutter TV 版已重写为原生 Android（2.0.0 起）。
 
-- `simple_live_tv_app/`：Flutter Android TV 客户端（GetX 状态管理/路由，Hive 存储，media_kit 播放，canvas_danmaku 弹幕）
-- `simple_live_core/`：核心库，各平台（虎牙、斗鱼、B站、抖音）直播信息与弹幕的实现，TV 端通过 `path: ../simple_live_core` 依赖
-- `assets/`：`tv_app_version.json`（TV 检查更新，发版 workflow 会改它）、`play_config.json`（core 里虎牙远程拉取，不要删）
-- `.github/workflows/publish_tv_app_*.yaml`：TV 发版 CI
+- `simple_live_android/`：原生 Android TV 工程（Kotlin，传统 View）
+  - `:core`：纯 Kotlin/JVM 核心库。`site/` 四个平台（B站、斗鱼、虎牙、抖音）、`danmaku/` 弹幕、`tars/` 虎牙 Tars 编解码、`common/` HTTP/JSON/JS 引擎接口；JS 资源（crypto-js、抖音 a_bogus、webmssdk）在 `core/src/main/resources/js/`
+  - `:app`：界面（`ui/`）、存储（`data/Store.kt` 带 updatedAt/墓碑的记录，`data/Settings.kt` SharedPreferences）、服务（`service/` 关注状态、局域网同步、OTA）
+- `simple_live_core/`：旧版 Dart 核心库，只作移植参考，不参与构建
+- `assets/`：`tv_app_version.json`（发版说明，CI 读取）、`play_config.json`
+- `.github/workflows/publish_tv_app_release.yaml`：TV 发版 CI（Gradle 构建）
 
-## 环境
+## 环境与验证
 
-- Flutter `3.38`
-- 本机未安装 Flutter，无法本地 analyze/编译；改完代码需要说明未经编译验证
+- `JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home`，SDK 在 `~/Library/Android/sdk`
+- 编译：`cd simple_live_android && ./gradlew :app:assembleDebug`
+- 平台冒烟测试（真实请求接口，默认不跑）：`./gradlew :core:test -PliveTest --tests '*SiteSmokeTest*'`
+- 小米电视：`adb -s 192.168.31.33:5555`（armeabi-v7a）；debug 包 applicationId 带 `.dev`，与正式版共存
 
 ## 开发约定
 
-- TV 端交互基于遥控器焦点（`AppFocusNode` / `BaseFocusModel`），新增可交互组件要处理焦点
-- 弹幕处理在热路径上（大房间每秒几百条），避免每条消息做重复计算（如构造正则），屏蔽词用 `AppSettingsController.isShielded`
-- 送入 canvas_danmaku 的弹幕在 `PlayerDanmakuMixin.addDanmaku` 按 `kMaxDanmakuPerSecond` 限流（该库每条都先排版再找轨道，轨道满时白做）
-- `Obx` 内不要新建 `AppFocusNode`，重建会换掉节点导致焦点丢失；放到 `Obx` 外或控制器里
-
-- 抖音搜索接口需要登录，TV 端改为按直播间链接/房间号打开（`DouyinSite.parseRoomIdFromUrl`、`AppNavigator.openDouyinUrl`）；搜索框里的二维码指向 `SyncService` 局域网服务（端口 23234）的 `/open` 页面，手机粘贴链接发到电视
+- 遥控器焦点：可交互 View 要 `isFocusable`，用 `tvFocus()` 做焦点放大
+- 播放用 Media3 ExoPlayer：FLV 只支持 H.264，H.265 必须走 HLS/fmp4（B站跳过 HEVC FLV、斗鱼固定 `hevc=0`、抖音 265 优先 HLS）
+- 弹幕在热路径上：`LiveRoomActivity` 按每秒上限限流，屏蔽词用 `ShieldFilter`
+- 斗鱼签名、抖音 a_bogus / 弹幕签名通过 `Js.engine`（Android 上是 QuickJS，测试里是 Node）执行
+- 抖音搜索需要登录，改为按直播间链接/房间号打开（`DouyinSite.parseRoomIdFromUrl`）；搜索框二维码指向局域网服务（端口 23234）的 `/open` 页面
+- 局域网同步：UDP 23235 广播 digest，不同则 `POST /gossip/exchange` 全量交换，按 updatedAt 新者胜合并
+- 旧 Flutter 版数据（`app_flutter/*.hive`）首次启动由 `HiveMigration` 自动导入，只读不删
 
 ## 发版与 OTA
 
-- 应用内更新只在 设置 → 关于 → 版本 手动触发，不在启动时自动检查/弹窗
-- 应用内更新（`lib/services/ota_service.dart`）读取 GitHub `mmooyyii/dart_simple_live` 的 Releases，取最新的 `tv_` 开头 tag，按设备 ABI 下载 `app-<abi>-release.apk`，通过 MethodChannel `simple_live_tv/ota` + FileProvider 调起系统安装
-- 发版：先改 `simple_live_tv_app/pubspec.yaml` 的 `version`，再打 tag `tv_<同一版本号>`（如 `tv_1.6.6`）触发 `publish_tv_app_release.yaml`；版本比较用 tag 里的版本号对比 `packageInfo.version`
-- 覆盖安装要求签名一致，CI 需配置 `TV_KEYSTORE_BASE64` 等签名 secrets
+- 应用内更新只在 设置 → 关于 → 版本 手动触发，不自动弹窗
+- OTA 读取 GitHub `mmooyyii/dart_simple_live` 最新 `tv_` tag，按 ABI 下载 `app-<abi>-release.apk`，FileProvider 调起安装
+- 发版：改 `simple_live_android/app/build.gradle.kts` 的 `appVersionName`（和 `appVersionBase`，versionCode = abi*1000 + base，必须递增）与 `assets/tv_app_version.json`，再打 tag `tv_<版本号>`
+- 签名必须与旧版一致（CI secrets `TV_KEYSTORE_BASE64` 等）；CI 带 `-PrequireReleaseSigning`，缺签名直接失败
 
 ## Git
 
