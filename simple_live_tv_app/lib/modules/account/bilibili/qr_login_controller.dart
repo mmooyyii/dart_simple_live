@@ -56,6 +56,8 @@ class BiliBiliQRLoginController extends GetxController {
   }
 
   void startPoll() {
+    // 刷新二维码时先停掉上一轮轮询
+    timer?.cancel();
     timer = Timer.periodic(
       const Duration(seconds: 3),
       (timer) {

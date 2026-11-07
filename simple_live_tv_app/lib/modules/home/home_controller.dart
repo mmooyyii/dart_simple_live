@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:get/get.dart';
 
+import 'package:simple_live_tv_app/app/app_focus_node.dart';
 import 'package:simple_live_tv_app/app/controller/base_controller.dart';
 
 import 'package:simple_live_tv_app/routes/route_path.dart';
@@ -9,6 +10,9 @@ import 'package:simple_live_tv_app/services/ota_service.dart';
 
 class HomeController extends BaseController {
   var datetime = "00:00".obs;
+
+  /// 关注管理列表中每个用户的焦点节点
+  final followFocusNodes = <String, AppFocusNode>{};
 
   @override
   void onInit() {

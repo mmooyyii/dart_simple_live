@@ -62,8 +62,11 @@ class LiveRoomController extends PlayerController with WidgetsBindingObserver {
 
   var datetime = "00:00".obs;
 
+  Timer? _clockTimer;
+
   void initTimer() {
-    Timer.periodic(const Duration(seconds: 1), (timer) {
+    _clockTimer?.cancel();
+    _clockTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       var now = DateTime.now();
       datetime.value =
           "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}";
@@ -78,6 +81,7 @@ class LiveRoomController extends PlayerController with WidgetsBindingObserver {
 
   @override
   void onInit() {
+    WidgetsBinding.instance.addObserver(this);
     initTimer();
     showDanmakuState.value = AppSettingsController.instance.danmuEnable.value;
     followed.value = DBService.instance.getFollowExist("${site.id}_$roomId");
@@ -125,18 +129,26 @@ class LiveRoomController extends PlayerController with WidgetsBindingObserver {
     }
   }
 
+  /// 加载批次号，快速切台时丢弃旧房间迟到的结果
+  int _loadBatch = 0;
+
   /// 加载直播间信息
   void loadData() async {
+    var batch = ++_loadBatch;
     try {
       SmartDialog.showLoading(msg: "");
       pageLoadding.value = true;
-      detail.value = await site.liveSite.getRoomDetail(roomId: roomId);
+      var roomDetail = await site.liveSite.getRoomDetail(roomId: roomId);
+      if (batch != _loadBatch) {
+        return;
+      }
+      detail.value = roomDetail;
 
       addHistory();
       online.value = detail.value!.online;
       liveStatus.value = detail.value!.status || detail.value!.isRecord;
       if (liveStatus.value) {
-        getPlayQualites();
+        getPlayQualites(batch);
       }
       if (detail.value!.isRecord) {
         SmartDialog.showToast("当前主播未开播，正在轮播录像");
@@ -145,20 +157,27 @@ class LiveRoomController extends PlayerController with WidgetsBindingObserver {
       initDanmau();
       liveDanmaku.start(detail.value?.danmakuData);
     } catch (e) {
-      SmartDialog.showToast(e.toString());
+      if (batch == _loadBatch) {
+        SmartDialog.showToast(e.toString());
+      }
     } finally {
-      SmartDialog.dismiss(status: SmartStatus.loading);
-      pageLoadding.value = false;
+      if (batch == _loadBatch) {
+        SmartDialog.dismiss(status: SmartStatus.loading);
+        pageLoadding.value = false;
+      }
     }
   }
 
   /// 初始化播放器
-  void getPlayQualites() async {
+  void getPlayQualites(int batch) async {
     qualites.clear();
     currentQuality = -1;
     try {
       var playQualites =
           await site.liveSite.getPlayQualites(detail: detail.value!);
+      if (batch != _loadBatch) {
+        return;
+      }
 
       if (playQualites.isEmpty) {
         SmartDialog.showToast("无法读取播放清晰度");
@@ -178,20 +197,33 @@ class LiveRoomController extends PlayerController with WidgetsBindingObserver {
         currentQuality = middle;
       }
 
-      getPlayUrl();
+      getPlayUrl(batch: batch);
     } catch (e) {
       Log.logPrint(e);
       SmartDialog.showToast("无法读取播放清晰度");
     }
   }
 
-  void getPlayUrl() async {
+  void getPlayUrl({int? batch}) async {
+    batch ??= _loadBatch;
     playUrls.clear();
     currentQualityInfo.value = qualites[currentQuality].quality;
     currentLineInfo.value = "";
     currentLineIndex = -1;
-    var playUrl = await site.liveSite
-        .getPlayUrls(detail: detail.value!, quality: qualites[currentQuality]);
+    LivePlayUrl playUrl;
+    try {
+      playUrl = await site.liveSite.getPlayUrls(
+          detail: detail.value!, quality: qualites[currentQuality]);
+    } catch (e) {
+      Log.logPrint(e);
+      if (batch == _loadBatch) {
+        SmartDialog.showToast("无法读取播放地址");
+      }
+      return;
+    }
+    if (batch != _loadBatch) {
+      return;
+    }
     if (playUrl.urls.isEmpty) {
       SmartDialog.showToast("无法读取播放地址");
       return;
@@ -343,6 +375,7 @@ class LiveRoomController extends PlayerController with WidgetsBindingObserver {
 
     rxSite.value = site;
     rxRoomId.value = roomId;
+    followed.value = DBService.instance.getFollowExist("${site.id}_$roomId");
 
     // 清除全部消息
     liveDanmaku.stop();
@@ -424,6 +457,9 @@ class LiveRoomController extends PlayerController with WidgetsBindingObserver {
 
   @override
   void onClose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _clockTimer?.cancel();
+    doubleClickTimer?.cancel();
     liveDanmaku.stop();
 
     danmakuController = null;

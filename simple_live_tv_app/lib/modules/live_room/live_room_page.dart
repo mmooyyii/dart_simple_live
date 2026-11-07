@@ -97,6 +97,13 @@ class LiveRoomPage extends GetView<LiveRoomController> {
     //   return;
     // }
 
+    // 长按上下键时忽略重复事件，避免连续切很多个台
+    if (key is KeyRepeatEvent &&
+        (key.logicalKey == LogicalKeyboardKey.arrowUp ||
+            key.logicalKey == LogicalKeyboardKey.arrowDown)) {
+      return;
+    }
+
     // 点击上键切换上一个直播
     if (key.logicalKey == LogicalKeyboardKey.arrowUp) {
       controller.prevChannel();

@@ -292,7 +292,9 @@ class HomePage extends GetView<HomeController> {
                     padding: AppStyle.edgeInsetsA40,
                     itemBuilder: (_, i) {
                       var item = FollowUserService.instance.list[i];
-                      var foucsNode = AppFocusNode();
+                      // 按用户复用焦点节点，列表刷新/删除后焦点不丢失
+                      var foucsNode = controller.followFocusNodes
+                          .putIfAbsent(item.id, () => AppFocusNode());
                       return HighlightListTile(
                         autofocus: i == 0,
                         leading: NetImage(
@@ -300,6 +302,7 @@ class HomePage extends GetView<HomeController> {
                           width: 64.w,
                           height: 64.w,
                           borderRadius: 64.w,
+                          cacheWidth: 100,
                         ),
                         title: item.userName,
                         focusNode: foucsNode,
