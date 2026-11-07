@@ -1,6 +1,7 @@
 import 'package:simple_live_tv_app/services/local_storage_service.dart';
 
 import 'package:get/get.dart';
+import 'package:simple_live_tv_app/app/utils.dart';
 
 class AppSettingsController extends GetxController {
   static AppSettingsController get instance =>
@@ -70,6 +71,8 @@ class AppSettingsController extends GetxController {
 
     // ignore: invalid_use_of_protected_member
     shieldList.value = LocalStorageService.instance.shieldBox.values.toSet();
+    _buildShieldPatterns();
+    ever(shieldList, (_) => _buildShieldPatterns());
 
     scaleMode.value = LocalStorageService.instance.getValue(
       LocalStorageService.kPlayerScaleMode,
@@ -234,6 +237,36 @@ class AppSettingsController extends GetxController {
   }
 
   RxSet<String> shieldList = <String>{}.obs;
+
+  /// 预编译的屏蔽规则，避免每条弹幕都重新构造正则
+  List<Pattern> _shieldPatterns = [];
+
+  void _buildShieldPatterns() {
+    var patterns = <Pattern>[];
+    for (var keyword in shieldList) {
+      if (Utils.isRegexFormat(keyword)) {
+        try {
+          patterns.add(RegExp(Utils.removeRegexFormat(keyword)));
+        } catch (e) {
+          // 正则格式错误的关键词直接忽略
+        }
+      } else {
+        patterns.add(keyword);
+      }
+    }
+    _shieldPatterns = patterns;
+  }
+
+  /// 消息是否命中屏蔽词
+  bool isShielded(String message) {
+    for (var pattern in _shieldPatterns) {
+      if (message.contains(pattern)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   void addShieldList(String e) {
     shieldList.add(e);
     LocalStorageService.instance.shieldBox.put(e, e);
