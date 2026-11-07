@@ -221,6 +221,8 @@ object SyncService {
 
     // ---------------- HTTP ----------------
 
+    private const val MAX_BODY = 8 * 1024 * 1024
+
     private class Server : NanoHTTPD(HTTP_PORT) {
         override fun serve(session: IHTTPSession): Response = try {
             route(session)
@@ -229,10 +231,18 @@ object SyncService {
             json(false, e.message ?: "error")
         }
 
+        /** 按 Content-Length 读原始请求体并按 UTF-8 解码（parseBody 不带 charset 时按 ASCII 解码，表单类型还拿不到原文） */
         private fun body(session: IHTTPSession): String {
-            val files = HashMap<String, String>()
-            session.parseBody(files)
-            return files["postData"] ?: ""
+            val length = session.headers["content-length"]?.toIntOrNull() ?: return ""
+            if (length <= 0 || length > MAX_BODY) return ""
+            val bytes = ByteArray(length)
+            var read = 0
+            while (read < length) {
+                val n = session.inputStream.read(bytes, read, length - read)
+                if (n < 0) break
+                read += n
+            }
+            return String(bytes, 0, read, Charsets.UTF_8)
         }
 
         private fun json(status: Boolean, message: String, extra: Map<String, Any> = emptyMap()): Response {
