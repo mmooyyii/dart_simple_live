@@ -3,12 +3,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:simple_live_tv_app/app/app_focus_node.dart';
 import 'package:simple_live_tv_app/app/app_style.dart';
 import 'package:simple_live_tv_app/app/utils.dart';
 import 'package:simple_live_tv_app/modules/home/home_controller.dart';
 import 'package:simple_live_tv_app/services/follow_user_service.dart';
+import 'package:simple_live_tv_app/services/sync_service.dart';
 import 'package:simple_live_tv_app/widgets/app_scaffold.dart';
 import 'package:simple_live_tv_app/widgets/button/highlight_button.dart';
 import 'package:simple_live_tv_app/widgets/button/highlight_list_tile.dart';
@@ -420,6 +422,35 @@ class HomePage extends GetView<HomeController> {
                   isDense: true,
                   fillColor: Get.theme.primaryColor,
                   contentPadding: AppStyle.edgeInsetsA32,
+                ),
+              ),
+            ),
+            // 遥控器输入链接不方便，手机扫码打开网页粘贴链接发到电视
+            Obx(
+              () => Visibility(
+                visible: SyncService.instance.httpRunning.value,
+                child: Padding(
+                  padding: AppStyle.edgeInsetsV24.copyWith(bottom: 0),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      QrImageView(
+                        data: SyncService.instance.openPageUrl,
+                        version: QrVersions.auto,
+                        backgroundColor: Colors.white,
+                        padding: AppStyle.edgeInsetsA12,
+                        size: 200.w,
+                      ),
+                      AppStyle.hGap24,
+                      SizedBox(
+                        width: 476.w,
+                        child: Text(
+                          "手机扫码（与电视在同一局域网），粘贴抖音直播间链接，即可在电视上打开",
+                          style: AppStyle.textStyleWhite,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

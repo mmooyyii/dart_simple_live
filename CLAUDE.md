@@ -21,6 +21,8 @@
 - 送入 canvas_danmaku 的弹幕在 `PlayerDanmakuMixin.addDanmaku` 按 `kMaxDanmakuPerSecond` 限流（该库每条都先排版再找轨道，轨道满时白做）
 - `Obx` 内不要新建 `AppFocusNode`，重建会换掉节点导致焦点丢失；放到 `Obx` 外或控制器里
 
+- 抖音搜索接口需要登录，TV 端改为按直播间链接/房间号打开（`DouyinSite.parseRoomIdFromUrl`、`AppNavigator.openDouyinUrl`）；搜索框里的二维码指向 `SyncService` 局域网服务（端口 23234）的 `/open` 页面，手机粘贴链接发到电视
+
 ## 发版与 OTA
 
 - 应用内更新只在 设置 → 关于 → 版本 手动触发，不在启动时自动检查/弹窗

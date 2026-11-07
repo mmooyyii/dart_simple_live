@@ -2,10 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
-import 'package:simple_live_core/simple_live_core.dart';
-import 'package:simple_live_tv_app/app/constant.dart';
-import 'package:simple_live_tv_app/app/log.dart';
-import 'package:simple_live_tv_app/app/sites.dart';
 import 'package:simple_live_tv_app/routes/app_navigation.dart';
 
 import 'package:simple_live_tv_app/app/app_focus_node.dart';
@@ -59,21 +55,12 @@ class HomeController extends BaseController {
     if (!text.contains("douyin.com")) {
       return false;
     }
-    var site = Sites.allSites[Constant.kDouyin]!;
-    String? roomId;
-    try {
-      SmartDialog.showLoading(msg: "");
-      roomId = await (site.liveSite as DouyinSite).parseRoomIdFromUrl(text);
-    } catch (e) {
-      Log.logPrint(e);
-    } finally {
-      SmartDialog.dismiss(status: SmartStatus.loading);
+    SmartDialog.showLoading(msg: "");
+    var error = await AppNavigator.openDouyinUrl(text);
+    SmartDialog.dismiss(status: SmartStatus.loading);
+    if (error != null) {
+      SmartDialog.showToast(error);
     }
-    if (roomId == null) {
-      SmartDialog.showToast("无法识别的抖音直播间链接");
-      return true;
-    }
-    AppNavigator.toLiveRoomDetail(site: site, roomId: roomId);
     return true;
   }
 

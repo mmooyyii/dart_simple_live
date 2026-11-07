@@ -12,6 +12,7 @@ import 'package:simple_live_tv_app/app/log.dart';
 import 'package:simple_live_tv_app/app/utils.dart';
 import 'package:simple_live_tv_app/models/db/follow_user.dart';
 import 'package:simple_live_tv_app/models/db/history.dart';
+import 'package:simple_live_tv_app/routes/app_navigation.dart';
 import 'package:simple_live_tv_app/services/bilibili_account_service.dart';
 import 'package:simple_live_tv_app/services/db_service.dart';
 import 'package:udp/udp.dart';
@@ -149,6 +150,8 @@ class SyncService extends GetxService {
       serverRouter.post('/sync/history', _syncHistoryReuqest);
       serverRouter.post('/sync/blocked_word', _syncBlockedWordReuqest);
       serverRouter.post('/sync/account/bilibili', _syncBiliAccountReuqest);
+      serverRouter.get('/open', _openPageRequest);
+      serverRouter.post('/open', _openUrlRequest);
 
       var server = await shelf_io.serve(
         serverRouter,
@@ -169,6 +172,55 @@ class SyncService extends GetxService {
       httpErrorMsg.value = e.toString();
       Log.logPrint(e);
     }
+  }
+
+  /// 手机扫码打开的发送链接页面地址，ipAddress 可能有多个，取第一个
+  String get openPageUrl =>
+      "http://${ipAddress.value.split(';').first}:$httpPort/open";
+
+  /// 手机发送直播间链接的网页
+  shelf.Response _openPageRequest(shelf.Request request) {
+    return _htmlResponse("");
+  }
+
+  /// 收到手机发来的直播间链接，在电视上打开
+  Future<shelf.Response> _openUrlRequest(shelf.Request request) async {
+    var body = await request.readAsString();
+    var text = Uri.splitQueryString(body)["url"]?.trim() ?? "";
+    if (text.isEmpty) {
+      return _htmlResponse("请粘贴直播间链接");
+    }
+    var error = await AppNavigator.openDouyinUrl(text);
+    return _htmlResponse(error ?? "已在电视上打开");
+  }
+
+  shelf.Response _htmlResponse(String message) {
+    var escaped = const HtmlEscape().convert(message);
+    return shelf.Response.ok(
+      '''<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simple Live TV</title>
+<style>
+body{font-family:sans-serif;margin:24px;background:#111;color:#eee}
+textarea{width:100%;height:120px;font-size:16px;box-sizing:border-box;padding:8px}
+button{width:100%;margin-top:12px;padding:14px;font-size:18px;border:0;border-radius:8px;background:#fe2c55;color:#fff}
+p.msg{margin-top:16px;font-size:16px}
+</style>
+</head>
+<body>
+<h3>发送直播间到电视</h3>
+<form method="post" action="/open">
+<textarea name="url" placeholder="粘贴抖音直播间链接或 App 分享的文案"></textarea>
+<button type="submit">在电视上打开</button>
+</form>
+<p class="msg">$escaped</p>
+</body>
+</html>''',
+      headers: {"Content-Type": "text/html; charset=utf-8"},
+    );
   }
 
   /// 测试服务能否正常访问
