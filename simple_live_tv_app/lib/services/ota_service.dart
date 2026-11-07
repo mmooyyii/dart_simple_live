@@ -20,31 +20,24 @@ class OtaService {
 
   static var _checking = false;
 
-  /// 检查更新
-  /// - [manual] 手动检查时，没有新版本或检查失败也给出提示
-  static Future<void> checkUpdate({bool manual = false}) async {
+  /// 检查更新，只由设置页手动触发
+  static Future<void> checkUpdate() async {
     if (_checking || !Platform.isAndroid) {
       return;
     }
     _checking = true;
     try {
-      if (manual) {
-        SmartDialog.showLoading(msg: "正在检查更新");
-      }
+      SmartDialog.showLoading(msg: "正在检查更新");
       VersionModel? latest;
       try {
         latest = await CommonRequest().checkUpdate();
       } finally {
-        if (manual) {
-          SmartDialog.dismiss(status: SmartStatus.loading);
-        }
+        SmartDialog.dismiss(status: SmartStatus.loading);
       }
       var current = Utils.packageInfo.version;
       if (latest == null ||
           VersionModel.compareVersion(latest.version, current) <= 0) {
-        if (manual) {
-          SmartDialog.showToast("当前已是最新版本 v$current");
-        }
+        SmartDialog.showToast("当前已是最新版本 v$current");
         return;
       }
       var confirm = await Utils.showAlertDialog(
@@ -58,9 +51,7 @@ class OtaService {
       }
     } catch (e) {
       Log.logPrint(e);
-      if (manual) {
-        SmartDialog.showToast("检查更新失败：$e");
-      }
+      SmartDialog.showToast("检查更新失败：$e");
     } finally {
       _checking = false;
     }

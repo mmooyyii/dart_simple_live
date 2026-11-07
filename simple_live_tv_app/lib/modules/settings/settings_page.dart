@@ -487,7 +487,7 @@ class SettingsPage extends GetView<SettingsController> {
           focusNode: controller.versionFocusNode,
           title: "版本",
           subtitle: "v${Utils.packageInfo.version}，点击检查更新",
-          onTap: () => OtaService.checkUpdate(manual: true),
+          onTap: () => OtaService.checkUpdate(),
         ),
       ],
     );

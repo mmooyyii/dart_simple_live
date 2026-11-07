@@ -21,6 +21,7 @@
 
 ## 发版与 OTA
 
+- 应用内更新只在 设置 → 关于 → 版本 手动触发，不在启动时自动检查/弹窗
 - 应用内更新（`lib/services/ota_service.dart`）读取 GitHub `mmooyyii/dart_simple_live` 的 Releases，取最新的 `tv_` 开头 tag，按设备 ABI 下载 `app-<abi>-release.apk`，通过 MethodChannel `simple_live_tv/ota` + FileProvider 调起系统安装
 - 发版：先改 `simple_live_tv_app/pubspec.yaml` 的 `version`，再打 tag `tv_<同一版本号>`（如 `tv_1.6.6`）触发 `publish_tv_app_release.yaml`；版本比较用 tag 里的版本号对比 `packageInfo.version`
 - 覆盖安装要求签名一致，CI 需配置 `TV_KEYSTORE_BASE64` 等签名 secrets
