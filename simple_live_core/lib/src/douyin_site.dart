@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:dio/dio.dart';
 import 'package:simple_live_core/simple_live_core.dart';
 import 'package:simple_live_core/src/common/convert_helper.dart';
 import 'package:simple_live_core/src/common/http_client.dart';
@@ -642,100 +643,82 @@ class DouyinSite implements LiveSite {
     String keyword, {
     int page = 1,
   }) async {
-    String serverUrl = "https://www.douyin.com/aweme/v1/web/live/search/";
-    var uri = Uri.parse(serverUrl).replace(
-      scheme: "https",
-      port: 443,
-      queryParameters: {
-        "device_platform": "webapp",
-        "aid": "6383",
-        "channel": "channel_pc_web",
-        "search_channel": "aweme_live",
-        "keyword": keyword,
-        "search_source": "switch_tab",
-        "query_correct_type": "1",
-        "is_filter_search": "0",
-        "from_group_id": "",
-        "offset": ((page - 1) * 10).toString(),
-        "count": "10",
-        "pc_client_type": "1",
-        "version_code": "170400",
-        "version_name": "17.4.0",
-        "cookie_enabled": "true",
-        "screen_width": "1980",
-        "screen_height": "1080",
-        "browser_language": "zh-CN",
-        "browser_platform": "Win32",
-        "browser_name": "Edge",
-        "browser_version": "125.0.0.0",
-        "browser_online": "true",
-        "engine_name": "Blink",
-        "engine_version": "125.0.0.0",
-        "os_name": "Windows",
-        "os_version": "10",
-        "cpu_core_num": "12",
-        "device_memory": "8",
-        "platform": "PC",
-        "downlink": "10",
-        "effective_type": "4g",
-        "round_trip_time": "100",
-        "webid": "7382872326016435738",
-      },
+    // 抖音 Web 搜索接口现在必须登录（status_code 2483），改为按链接/房间号直接查直播间
+    if (page > 1) {
+      return LiveSearchRoomResult(hasMore: false, items: []);
+    }
+    var roomId = await _parseKeywordRoomId(keyword);
+    var detail = await getRoomDetail(roomId: roomId);
+    return LiveSearchRoomResult(
+      hasMore: false,
+      items: [
+        LiveRoomItem(
+          roomId: detail.roomId,
+          title: detail.title,
+          cover: detail.cover,
+          userName: detail.userName,
+          online: detail.online,
+        ),
+      ],
     );
-    //var requlestUrl = await getAbogusUrl(uri.toString());
-    var requlestUrl = uri.toString();
-    var headResp = await HttpClient.instance.head(
-      'https://live.douyin.com',
-      header: headers,
-    );
-    var dyCookie = "";
-    headResp.headers["set-cookie"]?.forEach((element) {
-      var cookie = element.split(";")[0];
-      if (cookie.contains("ttwid")) {
-        dyCookie += "$cookie;";
-      }
-      if (cookie.contains("__ac_nonce")) {
-        dyCookie += "$cookie;";
-      }
-    });
+  }
 
-    var result = await HttpClient.instance.getJson(
-      requlestUrl,
-      queryParameters: {},
-      header: {
-        "Authority": 'www.douyin.com',
-        'accept': 'application/json, text/plain, */*',
-        'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8',
-        'cookie': dyCookie,
-        'priority': 'u=1, i',
-        'referer':
-            'https://www.douyin.com/search/${Uri.encodeComponent(keyword)}?type=live',
-        'sec-ch-ua':
-            '"Microsoft Edge";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-origin',
-        'user-agent': kDefaultUserAgent,
-      },
+  /// 搜索关键字转房间号：支持直播间链接、分享文案、纯数字房间号
+  Future<String> _parseKeywordRoomId(String keyword) async {
+    var text = keyword.trim();
+    if (RegExp(r'^\d+$').hasMatch(text)) {
+      return text;
+    }
+    var roomId = await parseRoomIdFromUrl(text);
+    if (roomId == null) {
+      throw Exception("抖音搜索需要登录，请输入直播间链接或房间号");
+    }
+    return roomId;
+  }
+
+  /// 直播间链接里的房间号
+  /// - https://live.douyin.com/200525029536
+  /// - https://www.douyin.com/follow/live/76490985813?anchor_id=...
+  /// - https://www.douyin.com/root/live/76490985813
+  /// - https://webcast.amemv.com/douyin/webcast/reflow/7376429659866598196（短链重定向后）
+  static final _roomUrlRegs = [
+    RegExp(r'live\.douyin\.com/(\d+)'),
+    RegExp(r'douyin\.com/(?:follow|root)/live/(\d+)'),
+    RegExp(r'webcast/reflow/(\d+)'),
+  ];
+
+  static final _shortUrlReg = RegExp(r'https?://v\.douyin\.com/[A-Za-z0-9_\-]+/?');
+
+  /// 从直播间链接或 App 分享文案中解析房间号，解析不到返回 null
+  /// - 返回的可能是 webRid 也可能是 roomId，[getRoomDetail] 都能处理
+  Future<String?> parseRoomIdFromUrl(String input) async {
+    for (var reg in _roomUrlRegs) {
+      var match = reg.firstMatch(input);
+      if (match != null) {
+        return match.group(1);
+      }
+    }
+    // App 分享的短链，取重定向地址再解析
+    var shortUrl = _shortUrlReg.firstMatch(input)?.group(0);
+    if (shortUrl == null) {
+      return null;
+    }
+    var resp = await HttpClient.instance.dio.head(
+      shortUrl,
+      options: Options(
+        followRedirects: false,
+        validateStatus: (status) => status != null && status < 400,
+        headers: {"User-Agent": kDefaultUserAgent},
+      ),
     );
-    if (result == "" || result == 'blocked') {
-      throw Exception("抖音直播搜索被限制，请稍后再试");
+    var location = resp.headers.value("location") ?? "";
+    for (var reg in _roomUrlRegs) {
+      var match = reg.firstMatch(location);
+      if (match != null) {
+        return match.group(1);
+      }
     }
-    var items = <LiveRoomItem>[];
-    for (var item in result["data"] ?? []) {
-      var itemData = json.decode(item["lives"]["rawdata"].toString());
-      var roomItem = LiveRoomItem(
-        roomId: itemData["owner"]["web_rid"].toString(),
-        title: itemData["title"].toString(),
-        cover: itemData["cover"]["url_list"][0].toString(),
-        userName: itemData["owner"]["nickname"].toString(),
-        online: int.tryParse(itemData["stats"]["total_user"].toString()) ?? 0,
-      );
-      items.add(roomItem);
-    }
-    return LiveSearchRoomResult(hasMore: items.length >= 10, items: items);
+    return null;
   }
 
   @override
@@ -743,7 +726,23 @@ class DouyinSite implements LiveSite {
     String keyword, {
     int page = 1,
   }) async {
-    throw Exception("抖音暂不支持搜索主播，请直接搜索直播间");
+    // 同 searchRooms，只支持链接/房间号
+    if (page > 1) {
+      return LiveSearchAnchorResult(hasMore: false, items: []);
+    }
+    var roomId = await _parseKeywordRoomId(keyword);
+    var detail = await getRoomDetail(roomId: roomId);
+    return LiveSearchAnchorResult(
+      hasMore: false,
+      items: [
+        LiveAnchorItem(
+          roomId: detail.roomId,
+          avatar: detail.userAvatar,
+          userName: detail.userName,
+          liveStatus: detail.status,
+        ),
+      ],
+    );
   }
 
   @override

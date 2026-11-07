@@ -393,9 +393,12 @@ class HomePage extends GetView<HomeController> {
                 controller: textController,
                 style: AppStyle.textStyleWhite,
                 textInputAction: TextInputAction.search,
-                onSubmitted: (e) {
+                onSubmitted: (e) async {
                   Get.back();
                   if (e.isEmpty) {
+                    return;
+                  }
+                  if (await controller.tryOpenDouyinUrl(e)) {
                     return;
                   }
                   if (mode.value == 0) {
@@ -405,7 +408,9 @@ class HomePage extends GetView<HomeController> {
                   }
                 },
                 decoration: InputDecoration(
-                  hintText: mode.value == 0 ? "点击输入关键字搜索" : "点击主播昵称搜索",
+                  hintText: mode.value == 0
+                      ? "输入关键字或抖音直播间链接"
+                      : "输入主播昵称或抖音直播间链接",
                   hintStyle: AppStyle.textStyleWhite,
                   border: OutlineInputBorder(
                     borderRadius: AppStyle.radius16,
