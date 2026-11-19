@@ -123,6 +123,7 @@ class SettingsActivity : BaseActivity() {
             ActionItem("斗鱼", { "无需登录（不登录最高为高清）" }) { toast("斗鱼登录暂未支持") },
             ActionItem("虎牙", { "无需登录" }) {},
             ActionItem("抖音", { "无需登录" }) {},
+            ActionItem("Kick", { "无需登录（国内需要代理）" }) {},
         )
         else -> listOf(
             ActionItem("版本", { "v${BuildConfig.VERSION_NAME}，点击检查更新" }) { OtaService.checkUpdate(this) },

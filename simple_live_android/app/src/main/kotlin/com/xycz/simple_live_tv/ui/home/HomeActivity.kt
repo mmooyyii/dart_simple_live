@@ -124,7 +124,7 @@ class HomeActivity : BaseActivity() {
         fun renderMode() {
             db.modeRoom.isSelected = !anchorMode
             db.modeAnchor.isSelected = anchorMode
-            db.keyword.hint = if (anchorMode) "输入主播昵称或抖音直播间链接" else "输入关键字或抖音直播间链接"
+            db.keyword.hint = if (anchorMode) "输入主播昵称或直播间链接（抖音、Kick）" else "输入关键字或直播间链接（抖音、Kick）"
         }
         db.modeRoom.setIcon(R.drawable.ic_live_tv)
         db.modeAnchor.setIcon(R.drawable.ic_person)
@@ -153,10 +153,10 @@ class HomeActivity : BaseActivity() {
     }
 
     private fun search(text: String, anchorMode: Boolean) {
-        if (text.contains("douyin.com")) {
+        if (Nav.isRoomUrl(text)) {
             lifecycleScope.launch {
                 val loading = Dialogs.loading(this@HomeActivity)
-                val error = Nav.openDouyinUrl(this@HomeActivity, text)
+                val error = Nav.openRoomUrl(this@HomeActivity, text)
                 loading.dismiss()
                 error?.let { toast(it) }
             }

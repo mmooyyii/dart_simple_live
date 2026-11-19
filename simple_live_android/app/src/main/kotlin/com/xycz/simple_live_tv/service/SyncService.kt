@@ -349,7 +349,7 @@ object SyncService {
                     if (text.isEmpty()) {
                         openPage("请粘贴直播间链接")
                     } else {
-                        val error = runBlocking { withContext(Dispatchers.IO) { Nav.openDouyinUrl(App.instance, text) } }
+                        val error = runBlocking { withContext(Dispatchers.IO) { Nav.openRoomUrl(App.instance, text) } }
                         openPage(error ?: "已在电视上打开")
                     }
                 } else {
@@ -377,7 +377,7 @@ p.msg{margin-top:16px;font-size:16px}
 <body>
 <h3>发送直播间到电视</h3>
 <form method="post" action="/open">
-<textarea name="url" placeholder="粘贴抖音直播间链接或 App 分享的文案"></textarea>
+<textarea name="url" placeholder="粘贴抖音直播间链接、App 分享的文案或 Kick 频道链接"></textarea>
 <button type="submit">在电视上打开</button>
 </form>
 <p class="msg">$escaped</p>

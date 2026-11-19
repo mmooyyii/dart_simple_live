@@ -127,6 +127,10 @@ abstract class WebSocketDanmaku : LiveDanmaku {
         socket?.send(bytes.toByteString())
     }
 
+    protected fun sendText(text: String) {
+        socket?.send(text)
+    }
+
     /** 连接建立后（onReady 之前）发送加入房间的包 */
     protected open fun onSocketOpen() {}
 

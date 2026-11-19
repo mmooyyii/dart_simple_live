@@ -8,6 +8,7 @@ import com.xycz.simplelive.core.site.DeviceCapability
 import com.xycz.simplelive.core.site.DouyinSite
 import com.xycz.simplelive.core.site.DouyuSite
 import com.xycz.simplelive.core.site.HuyaSite
+import com.xycz.simplelive.core.site.KickSite
 import com.xycz.simplelive.core.site.LiveSite
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
@@ -85,6 +86,24 @@ class SiteSmokeTest {
 
     @Test
     fun douyin() = smoke(DouyinSite())
+
+    @Test
+    fun kick() = smoke(KickSite())
+
+    @Test
+    fun kickExtra() = runBlocking {
+        val site = KickSite()
+        val p1 = site.getRecommendRooms(1).items.map { it.roomId }
+        val p2 = site.getRecommendRooms(2).items.map { it.roomId }
+        println("推荐第 2 页 ${p2.size} 个，与第 1 页重复 ${p1.intersect(p2.toSet()).size} 个")
+        assertTrue(p2.isNotEmpty() && p1.intersect(p2.toSet()).size < p2.size / 2)
+        val a = site.searchAnchors("xqc")
+        val r = site.searchRooms("gta")
+        println("搜索主播 ${a.items.size} 个：${a.items.take(2)}；直播中 ${r.items.size} 个")
+        assertTrue(a.items.any { it.roomId == "xqc" })
+        println("链接解析：${KickSite.parseRoomIdFromUrl("https://kick.com/xQc?x=1")}")
+        assertTrue(KickSite.parseRoomIdFromUrl("https://kick.com/xQc?x=1") == "xqc")
+    }
 
     @Test
     fun douyinSearchByUrl() = runBlocking {

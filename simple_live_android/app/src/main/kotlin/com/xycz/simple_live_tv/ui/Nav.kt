@@ -8,6 +8,7 @@ import com.xycz.simple_live_tv.data.Store
 import com.xycz.simple_live_tv.ui.live.LiveRoomActivity
 import com.xycz.simple_live_tv.ui.login.BiliLoginActivity
 import com.xycz.simplelive.core.common.CoreLog
+import com.xycz.simplelive.core.site.KickSite
 
 object Nav {
     /** 打开直播间；B站未登录且开启了提示时先引导登录（未登录画质受限） */
@@ -39,6 +40,19 @@ object Nav {
         // 已在直播间时复用（singleTop），直接切台
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
         context.startActivity(intent)
+    }
+
+    /** 是否是能直接打开的直播间链接（抖音、Kick） */
+    fun isRoomUrl(text: String): Boolean = text.contains("douyin.com") || text.contains("kick.com/")
+
+    /** 打开直播间链接/分享文案（抖音、Kick），失败返回错误信息 */
+    suspend fun openRoomUrl(context: Context, text: String): String? {
+        if (text.contains("kick.com/")) {
+            val slug = KickSite.parseRoomIdFromUrl(text) ?: return "无法识别的 Kick 直播间链接"
+            startRoom(context, "kick", slug)
+            return null
+        }
+        return openDouyinUrl(context, text)
     }
 
     /** 打开抖音直播间链接/分享文案，失败返回错误信息 */
