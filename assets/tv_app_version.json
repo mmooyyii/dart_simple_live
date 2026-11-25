@@ -1,7 +1,7 @@
 {
-    "version": "2.0.0",
-    "version_num": 20000,
-    "version_desc": "- 重写为原生 Android（Kotlin），安装包和内存占用大幅减小，低配电视更流畅\n- 播放器换成 ExoPlayer；B站/抖音可选最高画质，斗鱼未登录最高为高清\n- 局域网内多台设备自动同步关注、观看记录、屏蔽词\n- 覆盖安装自动迁移旧版的关注、记录、设置",
+    "version": "2.1.0",
+    "version_num": 20100,
+    "version_desc": "- 新增 Kick 直播：推荐、分类、搜索，HLS 播放和弹幕\n- 可以按 kick.com 直播间链接直接打开",
     "prerelease": false,
     "download_url": "https://github.com/mmooyyii/dart_simple_live/releases"
 }

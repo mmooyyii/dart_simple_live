@@ -18,8 +18,8 @@ if (keystorePropertiesFile.exists()) {
 }
 
 // 版本号：versionCode 沿用 Flutter split-per-abi 的规则 abi*1000 + base，必须大于旧版
-val appVersionName = "2.0.0"
-val appVersionBase = 20000
+val appVersionName = "2.1.0"
+val appVersionBase = 20100
 val abiCodes = mapOf("armeabi-v7a" to 1, "arm64-v8a" to 2, "x86_64" to 4)
 
 android {
